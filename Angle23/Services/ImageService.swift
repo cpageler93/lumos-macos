@@ -8,6 +8,7 @@
 
 
 import Foundation
+import AppKit
 import RealmSwift
 
 
@@ -17,6 +18,9 @@ class ImageService {
 
     static let didUpdateImageNotification = NSNotification.Name("didUpdateImageNotification")
 
+    public private(set) var isUpdatingThumbnails: Bool = false
+    private var shouldUpdateThumbnails: Bool = false
+
     private init() {
 
     }
@@ -25,25 +29,25 @@ class ImageService {
         return try? Realm(fileURL: Preferences.imagesFolderPath.appendingPathComponent("Store.realm"))
     }
 
-    public func allImages() -> [ImageModel] {
-        guard let result = allImagesAsResult() else {
-            return []
-        }
-        return Array(result)
+    public func refresh() {
+        guard let realm = realmForImageFolderPath() else { return }
+        realm.refresh()
     }
 
-    public func allImagesAsResult() -> Results<ImageModel>? {
-        return realmForImageFolderPath()?.objects(ImageModel.self)
-    }
-
-    private func minViewCount() -> Int? {
+    private func minSortViewCount() -> Int? {
         guard let realm = realmForImageFolderPath() else { return nil }
-        return realm.objects(ImageModel.self).min(ofProperty: "viewCount")
+        return realm.objects(ImageModel.self).min(ofProperty: "sortViewCount")
     }
 
     public func write(_ closure: () -> Void) {
-        try? realmForImageFolderPath()?.write {
-            closure()
+        guard let realm = realmForImageFolderPath() else { return }
+        do {
+            try realm.write {
+                closure()
+            }
+            realm.refresh()
+        } catch {
+            print("write failed: \(error)")
         }
     }
 
@@ -66,18 +70,37 @@ class ImageService {
         }
 
         cleanImageModelsExcept(uuids: keepEventImageModelsWithUUID)
+        updateThumbnails()
     }
 
 }
-
+ 
 // MARK: - Model Operations
 
 extension ImageService {
+
+    public func allImages() -> [ImageModel] {
+        guard let result = allImagesAsResult() else {
+            return []
+        }
+        return Array(result)
+    }
+
+    public func allImagesAsResult() -> Results<ImageModel>? {
+        return realmForImageFolderPath()?.objects(ImageModel.self)
+    }
 
     public func imageModelWith(filename: String) -> ImageModel? {
         return realmForImageFolderPath()?
             .objects(ImageModel.self)
             .filter("filename = '\(filename)'")
+            .first
+    }
+
+    public func imageModelWith(uuid: String) -> ImageModel? {
+        return realmForImageFolderPath()?
+            .objects(ImageModel.self)
+            .filter("uuid = '\(uuid)'")
             .first
     }
 
@@ -88,12 +111,14 @@ extension ImageService {
 
     @discardableResult
     public func createImageModelWith(filename: String, closure: ((ImageModel) -> Void)? = nil) -> ImageModel {
+        refresh()
+        
         let creationDate = creationDateForFileWith(filename: filename)
 
         let imageModel = ImageModel()
         imageModel.filename = filename
         imageModel.createdDate = creationDate
-        imageModel.viewCount = minViewCount() ?? 0
+        imageModel.sortViewCount = minSortViewCount() ?? 0
 
         closure?(imageModel)
 
@@ -102,6 +127,7 @@ extension ImageService {
             realm?.add(imageModel)
         }
         sendDidUpdateImageNotification()
+        updateThumbnails()
 
         return imageModel
     }
@@ -137,11 +163,36 @@ extension ImageService {
         }
 
         sendDidUpdateImageNotification()
+        updateThumbnails()
     }
 
     public func removeImageModelWith(filepath: String) {
         let filename = URL(fileURLWithPath: filepath).lastPathComponent
         removeImageModelWith(filename: filename)
+    }
+
+    public func addNewImage(_ imageData: Data, fromUserWithName username: String) {
+        refresh()
+        
+        let imageModel = ImageModel()
+        imageModel.filename = "\(imageModel.uuid).jpg"
+        imageModel.createdDate = Date()
+        imageModel.sortViewCount = minSortViewCount() ?? 0
+        imageModel.uploadedFrom = username
+
+        let filepath = fullPathForFileWith(filename: imageModel.filename)
+        do {
+            try imageData.write(to: URL(fileURLWithPath: filepath))
+        } catch {
+            return
+        }
+
+        let realm = realmForImageFolderPath()
+        try? realm?.write {
+            realm?.add(imageModel)
+        }
+        sendDidUpdateImageNotification()
+        updateThumbnails()
     }
 
 }
@@ -168,11 +219,12 @@ private extension ImageService {
 private extension ImageService {
 
     func sendDidUpdateImageNotification() {
-        NotificationCenter.default.post(name: ImageService.didUpdateImageNotification, object: nil, userInfo: nil)
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(name: ImageService.didUpdateImageNotification, object: nil, userInfo: nil)
+        }
     }
 
 }
-
 
 // MARK: - Image Queue
 
@@ -180,17 +232,63 @@ extension ImageService {
 
     func fetchNextImageFromQueue() -> ImageModel? {
         let sortDescriptors = [
-            SortDescriptor(keyPath: "viewCount", ascending: true),
-            SortDescriptor(keyPath: "lastViewedDate", ascending: true)
+            SortDescriptor(keyPath: "sortViewCount", ascending: true),
+            SortDescriptor(keyPath: "createdDate", ascending: true)
         ]
-        let nextImage = allImagesAsResult()?
+        var nextImage = allImagesAsResult()?
             .filter("show == true")
             .sorted(by: sortDescriptors).first
+        if let firstNotSeen = allImagesAsResult()?.filter("lastViewedDate == nil").first {
+            print("replace next image with new not seen \(firstNotSeen.uuid)")
+            nextImage = firstNotSeen
+        }
         write {
-            nextImage?.viewCount += 1
+            nextImage?.sortViewCount += 1
+            nextImage?.totalViewCount += 1
+            nextImage?.lastViewedDate = Date()
         }
         sendDidUpdateImageNotification()
         return nextImage
+    }
+
+}
+
+// MARK: - Thumbnails
+
+extension ImageService {
+
+    public func updateThumbnails() {
+        shouldUpdateThumbnails = true
+        guard !isUpdatingThumbnails else { return }
+        isUpdatingThumbnails = true
+        shouldUpdateThumbnails = false
+        let dispatchQueue = DispatchQueue(label: "de.pageler.christoph.angle23.imageservice.updatethumbnails",
+                                          qos: .background,
+                                          attributes: .concurrent,
+                                          autoreleaseFrequency: .inherit,
+                                          target: nil)
+        dispatchQueue.async {
+            for image in self.allImages() {
+                if !image.hasThumbnail() {
+                    if let nsImage = image.nsImage() {
+                        let resizedImage = nsImage.scaled(to: CGSize(width: 100, height: 100))
+                        if let resizedData = resizedImage.tiffRepresentation {
+                            let imageRep = NSBitmapImageRep(data: resizedData)
+                            if let jpgImage = imageRep?.representation(using: NSBitmapImageRep.FileType.jpeg, properties: [:]) {
+                                try? jpgImage.write(to: image.absoluteFileURLForThumbnail())
+                            }
+                        }
+                    }
+                }
+            }
+
+            DispatchQueue.main.async {
+                self.isUpdatingThumbnails = false
+                if self.shouldUpdateThumbnails {
+                    self.updateThumbnails()
+                }
+            }
+        }
     }
 
 }

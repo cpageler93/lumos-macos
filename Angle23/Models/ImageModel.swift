@@ -18,7 +18,8 @@ class ImageModel: Object {
     @objc dynamic var uploadedFrom = ""
     @objc dynamic var createdDate: Date = Date()
     @objc dynamic var lastViewedDate: Date? = nil
-    @objc dynamic var viewCount: Int = 0
+    @objc dynamic var totalViewCount: Int = 0
+    @objc dynamic var sortViewCount: Int = 0
     @objc dynamic var show: Bool = true
 
 }

@@ -45,7 +45,6 @@ extension NSImage {
     ///
     /// - returns: a new scaled image.
     func scaled(to newSize: CGSize, scalingMode: NSImage.ScalingMode = .aspectFill) -> NSImage {
-
         let aspectRatio = scalingMode.aspectRatio(between: newSize, and: size)
 
         /* Build the rectangle representing the area to be drawn */

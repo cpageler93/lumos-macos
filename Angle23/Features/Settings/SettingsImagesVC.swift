@@ -85,6 +85,8 @@ extension SettingsImagesVC: NSTableViewDataSource {
         static let fromCell = "FromCell"
         static let viewCountCell = "ViewCountCell"
         static let showCell = "ShowCell"
+        static let sortViewCountCell = "SortViewCountCell"
+        static let createdDataCell = "CreatedDateCell"
 
     }
 
@@ -99,7 +101,7 @@ extension SettingsImagesVC: NSTableViewDataSource {
         case tableView.tableColumns[0]:
             let identifier = NSUserInterfaceItemIdentifier(rawValue: CellIdentifiers.imageCell)
             let cell = tableView.makeView(withIdentifier: identifier, owner: nil) as? ImageTableCellView
-            cell?.customImageView.image = image.imageData()
+            cell?.customImageView.image = image.nsImage()
             return cell
         case tableView.tableColumns[1]:
             let identifier = NSUserInterfaceItemIdentifier(rawValue: CellIdentifiers.filenameCell)
@@ -114,7 +116,7 @@ extension SettingsImagesVC: NSTableViewDataSource {
         case tableView.tableColumns[3]:
             let identifier = NSUserInterfaceItemIdentifier(rawValue: CellIdentifiers.viewCountCell)
             let cell = tableView.makeView(withIdentifier: identifier, owner: nil) as? NSTableCellView
-            cell?.textField?.stringValue = "\(image.viewCount)"
+            cell?.textField?.stringValue = "\(image.totalViewCount)"
             return cell
         case tableView.tableColumns[4]:
             let identifier = NSUserInterfaceItemIdentifier(rawValue: CellIdentifiers.showCell)
@@ -122,6 +124,17 @@ extension SettingsImagesVC: NSTableViewDataSource {
             cell?.checkboxButton.state = image.show ? .on : .off
             cell?.checkboxButton.tag = row
             cell?.checkboxButton.action = #selector(actionCheckboxButton)
+            return cell
+        case tableView.tableColumns[5]:
+            let identifier = NSUserInterfaceItemIdentifier(rawValue: CellIdentifiers.sortViewCountCell)
+            let cell = tableView.makeView(withIdentifier: identifier, owner: nil) as? NSTableCellView
+            cell?.textField?.stringValue = "\(image.sortViewCount)"
+            return cell
+        case tableView.tableColumns[6]:
+            let identifier = NSUserInterfaceItemIdentifier(rawValue: CellIdentifiers.createdDataCell)
+            let cell = tableView.makeView(withIdentifier: identifier, owner: nil) as? NSTableCellView
+            let dateString = DateFormatter.localizedString(from: image.createdDate, dateStyle: .short, timeStyle: .short)
+            cell?.textField?.stringValue = dateString
             return cell
         default:
             return nil

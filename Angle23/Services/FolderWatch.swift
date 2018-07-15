@@ -50,6 +50,7 @@ class FolderWatch {
         guard !fileEvent.flags.intersection(listenToFlags).isEmpty else { return }
         let path = fileEvent.path
         guard path.hasSuffix(".jpg") else { return }
+        guard Preferences.imagesFolderPath.path == URL(fileURLWithPath: path).deletingLastPathComponent().path else { return }
 
         if FileManager.default.fileExists(atPath: fileEvent.path) {
             if ImageService.shared.imageModelWith(filepath: fileEvent.path) == nil {

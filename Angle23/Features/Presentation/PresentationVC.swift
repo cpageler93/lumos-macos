@@ -42,7 +42,7 @@ private extension PresentationVC {
 
     private func fetchNextImage() -> NSImage? {
         guard let nextImage = ImageService.shared.fetchNextImageFromQueue() else { return nil }
-        return nextImage.imageData()
+        return nextImage.nsImage()
     }
 
     private func togglePresentationImageView(animated: Bool = true) {
