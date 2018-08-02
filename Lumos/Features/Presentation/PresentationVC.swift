@@ -23,14 +23,12 @@ class PresentationVC: NSViewController {
         presentationImageView2.image = nil
         presentationImageView1.alphaValue = 0
         presentationImageView2.alphaValue = 0
-    }
 
-    override func viewDidAppear() {
-        super.viewDidAppear()
-
-        togglePresentationImageView(animated: false)
-        Timer.scheduledTimer(withTimeInterval: 4, repeats: true) { (timer) in
-            self.togglePresentationImageView()
+        DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 0.5) {
+            self.togglePresentationImageView(animated: false)
+            Timer.scheduledTimer(withTimeInterval: 4, repeats: true) { (timer) in
+                self.togglePresentationImageView()
+            }
         }
     }
 
@@ -53,7 +51,13 @@ private extension PresentationVC {
             nextPresentationImageView = presentationImageView1
         }
 
-        nextPresentationImageView.image = fetchNextImage()
+        if let nextImage = fetchNextImage() {
+            nextPresentationImageView.image = nextImage
+            let isLandscape = nextImage.size.width > nextImage.size.height
+            nextPresentationImageView.scalingMode = isLandscape ? .aspectFill : .aspectFit
+        } else {
+            nextPresentationImageView.image = nil
+        }
 
         NSAnimationContext.runAnimationGroup({ context in
             context.duration = animated ? 2 : 0

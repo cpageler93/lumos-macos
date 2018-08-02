@@ -34,9 +34,17 @@ class ImageService {
         realm.refresh()
     }
 
-    private func minSortViewCount() -> Int? {
+    public func minSortViewCount() -> Int? {
+        return minSortViewCount(excluding: nil)
+    }
+
+    public func minSortViewCount(excluding: ImageModel?) -> Int? {
         guard let realm = realmForImageFolderPath() else { return nil }
-        return realm.objects(ImageModel.self).min(ofProperty: "sortViewCount")
+        var imagesForSortViewCount = realm.objects(ImageModel.self)
+        if let excluding = excluding {
+            imagesForSortViewCount = imagesForSortViewCount.filter("uuid != %@", excluding.uuid)
+        }
+        return imagesForSortViewCount.min(ofProperty: "sortViewCount")
     }
 
     public func write(_ closure: () -> Void) {
@@ -219,9 +227,13 @@ private extension ImageService {
 
 private extension ImageService {
 
-    func sendDidUpdateImageNotification() {
+    func sendDidUpdateImageNotification(_ imageModel: ImageModel? = nil) {
         DispatchQueue.main.async {
-            NotificationCenter.default.post(name: ImageService.didUpdateImageNotification, object: nil, userInfo: nil)
+            NotificationCenter.default.post(name: ImageService.didUpdateImageNotification,
+                                            object: nil,
+                                            userInfo: [
+                                                "imageModel": imageModel as Any
+            ])
         }
     }
 
@@ -248,7 +260,7 @@ extension ImageService {
             nextImage?.totalViewCount += 1
             nextImage?.lastViewedDate = Date()
         }
-        sendDidUpdateImageNotification()
+        sendDidUpdateImageNotification(nextImage)
         return nextImage
     }
 

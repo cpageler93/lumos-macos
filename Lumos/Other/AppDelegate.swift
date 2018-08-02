@@ -13,6 +13,7 @@ import Cocoa
 class AppDelegate: NSObject, NSApplicationDelegate {
 
     var settingsWindowController: NSWindowController? = nil
+    var presentationWindowController: PresentationWC? = nil
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         FolderBookmarkService.shared.loadBookmarks()
@@ -32,6 +33,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     @IBAction func openPreferences(_ sender: NSMenuItem) {
         settingsWindowController?.showWindow(nil)
+    }
+
+    @IBAction func showPresentation(_ sender: NSMenuItem) {
+        presentationWindowController?.showWindow(nil)
     }
 
 }

@@ -18,17 +18,22 @@ open class PresentationImageView: NSView {
         }
     }
 
+    var scalingMode: NSImage.ScalingMode = .aspectFill {
+        didSet {
+            setNeedsDisplay(bounds)
+        }
+    }
+
     open override func draw(_ dirtyRect: NSRect) {
         super.draw(dirtyRect)
 
+        let path = NSBezierPath(rect: bounds)
+        NSColor.black.setFill()
+        path.fill()
+        
         if let image = image {
-            let scaledImage = image.scaled(to: bounds.size,
-                                           scalingMode: .aspectFill)
+            let scaledImage = image.scaled(to: bounds.size, scalingMode: scalingMode)
             scaledImage.draw(in: bounds)
-        } else {
-            let path = NSBezierPath(rect: bounds)
-            NSColor.black.setFill()
-            path.fill()
         }
     }
 

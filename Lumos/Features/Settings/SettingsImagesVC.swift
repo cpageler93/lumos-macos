@@ -42,7 +42,15 @@ class SettingsImagesVC: NSViewController {
     }
 
     @objc private func notificationDidUpdateImagesNotification(_ notification: Notification) {
-        updateImages()
+        if let imageModel = notification.userInfo?["imageModel"] as? ImageModel {
+            if let indexOfImageModel = images.index(where: { $0.uuid == imageModel.uuid }) {
+                images[indexOfImageModel] = imageModel
+                tableViewImages.reloadData(forRowIndexes: IndexSet(integer: indexOfImageModel),
+                                           columnIndexes: IndexSet(integersIn: 0..<7))
+            }
+        } else {
+            updateImages()
+        }
     }
 
     private func updateImages() {
@@ -70,6 +78,8 @@ class SettingsImagesVC: NSViewController {
             FolderBookmarkService.shared.storeFolderInBookmark(url: url)
             FolderBookmarkService.shared.saveBookmarksData()
             ImageService.shared.cleanImageStore()
+
+            updateImages()
         }
     }
 
@@ -143,11 +153,18 @@ extension SettingsImagesVC: NSTableViewDataSource {
 
     @objc func actionCheckboxButton(_ sender: NSButton) {
         let image = images[sender.tag]
+        let show = sender.state == .on
         ImageService.shared.write {
-            image.show = sender.state == .on
+            image.show = show
+        }
+        // fix new sort view count
+        if show, let newMin = ImageService.shared.minSortViewCount(excluding: image) {
+            ImageService.shared.write {
+                image.sortViewCount = newMin
+            }
         }
         tableViewImages.reloadData(forRowIndexes: IndexSet(integer: sender.tag),
-                                   columnIndexes: IndexSet(integer: 4))
+                                   columnIndexes: IndexSet([4, 5]))
     }
 
 }
