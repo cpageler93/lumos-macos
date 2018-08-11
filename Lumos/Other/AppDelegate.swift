@@ -17,6 +17,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         FolderBookmarkService.shared.loadBookmarks()
+        Preferences.checkImageFolderPath()
         Server.shared.start()
         let _ = FolderWatch.shared
         ImageService.shared.cleanImageStore()
@@ -27,8 +28,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         settingsWindowController = storyboard.instantiateController(withIdentifier: identifier) as? NSWindowController
     }
 
-    func applicationWillTerminate(_ aNotification: Notification) {
-        // Insert code here to tear down your application
+    func application(_ sender: NSApplication, openFile filename: String) -> Bool {
+        guard filename.hasSuffix(".lms") else { return false }
+        let fileURL = URL(fileURLWithPath: filename)
+        Preferences.databaseName = fileURL.lastPathComponent
+        Preferences.imagesFolderPath = fileURL.deletingLastPathComponent()
+        Preferences.sendPreferencesUpdate()
+        return true
     }
 
     @IBAction func openPreferences(_ sender: NSMenuItem) {

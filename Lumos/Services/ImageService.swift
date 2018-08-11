@@ -21,12 +21,19 @@ class ImageService {
     public private(set) var isUpdatingThumbnails: Bool = false
     private var shouldUpdateThumbnails: Bool = false
 
+    public private(set) var preparingForImages: [String] = []
+
     private init() {
 
     }
 
     private func realmForImageFolderPath() -> Realm? {
-        return try? Realm(fileURL: Preferences.imagesFolderPath.appendingPathComponent("Store.realm"))
+        let folder = Preferences.imagesFolderPath.appendingPathComponent(Preferences.databaseName, isDirectory: true)
+        let path = folder.appendingPathComponent("Store.realm")
+        if !FileManager.default.fileExists(atPath: folder.path) {
+            try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: false, attributes: nil)
+        }
+        return try? Realm(fileURL: path)
     }
 
     public func refresh() {
@@ -44,6 +51,7 @@ class ImageService {
         if let excluding = excluding {
             imagesForSortViewCount = imagesForSortViewCount.filter("uuid != %@", excluding.uuid)
         }
+        imagesForSortViewCount = imagesForSortViewCount.filter("show == true")
         return imagesForSortViewCount.min(ofProperty: "sortViewCount")
     }
 
@@ -72,8 +80,9 @@ class ImageService {
                 keepEventImageModelsWithUUID.append(eventImageModel.uuid)
             } else {
                 // create new event image model
-                let eventImageModel = createImageModelWith(filename: filename)
-                keepEventImageModelsWithUUID.append(eventImageModel.uuid)
+                if let eventImageModel = createImageModelWith(filename: filename) {
+                    keepEventImageModelsWithUUID.append(eventImageModel.uuid)
+                }
             }
         }
 
@@ -119,7 +128,10 @@ extension ImageService {
     }
 
     @discardableResult
-    public func createImageModelWith(filename: String, closure: ((ImageModel) -> Void)? = nil) -> ImageModel {
+    public func createImageModelWith(filename: String, closure: ((ImageModel) -> Void)? = nil) -> ImageModel? {
+        guard !preparingForImages.contains(filename) else {
+            return nil
+        }
         refresh()
         
         let creationDate = creationDateForFileWith(filename: filename)
@@ -142,7 +154,7 @@ extension ImageService {
     }
 
     @discardableResult
-    public func createImageModelWith(filepath: String, closure: ((ImageModel) -> Void)? = nil) -> ImageModel {
+    public func createImageModelWith(filepath: String, closure: ((ImageModel) -> Void)? = nil) -> ImageModel? {
         let filename = URL(fileURLWithPath: filepath).lastPathComponent
         return createImageModelWith(filename: filename, closure: closure)
     }
@@ -189,6 +201,8 @@ extension ImageService {
         imageModel.sortViewCount = minSortViewCount() ?? 0
         imageModel.uploadedFrom = username
 
+        preparingForImages.append(imageModel.filename)
+
         let filepath = fullPathForFileWith(filename: imageModel.filename)
         do {
             try imageData.write(to: URL(fileURLWithPath: filepath))
@@ -200,6 +214,11 @@ extension ImageService {
         try? realm?.write {
             realm?.add(imageModel)
         }
+
+        if let index = preparingForImages.index(of: imageModel.filename) {
+            preparingForImages.remove(at: index)
+        }
+
         sendDidUpdateImageNotification()
         updateThumbnails()
     }

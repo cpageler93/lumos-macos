@@ -24,7 +24,26 @@ class Preferences {
         set {
             UserDefaults.standard.set(newValue, forKey: "imagesFolderPath")
             UserDefaults.standard.synchronize()
-            sendPreferencesUpdate()
+        }
+    }
+
+    static func checkImageFolderPath() {
+        if !FileManager.default.fileExists(atPath: imagesFolderPath.path) {
+            UserDefaults.standard.set(nil, forKey: "imagesFolderPath")
+            UserDefaults.standard.synchronize()
+        }
+    }
+
+    static var databaseName: String {
+        get {
+            guard let name = UserDefaults.standard.string(forKey: "databaseName") else {
+                return defaultDatabaseName
+            }
+            return name
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: "databaseName")
+            UserDefaults.standard.synchronize()
         }
     }
 
@@ -32,7 +51,16 @@ class Preferences {
         return FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Pictures")
     }
 
-    private static func sendPreferencesUpdate() {
+    private static var defaultDatabaseName: String {
+        return "Database.lms"
+    }
+
+    public static func resetToDefaultDatabaseName() {
+        UserDefaults.standard.set(nil, forKey: "databaseName")
+        UserDefaults.standard.synchronize()
+    }
+
+    public static func sendPreferencesUpdate() {
         NotificationCenter.default.post(name: didUpdatePreferencesNotification, object: nil)
     }
 

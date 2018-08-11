@@ -36,6 +36,5 @@ open class PresentationImageView: NSView {
             scaledImage.draw(in: bounds)
         }
     }
-
 }
 

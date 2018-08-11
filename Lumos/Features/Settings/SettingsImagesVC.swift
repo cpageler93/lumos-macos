@@ -28,6 +28,10 @@ class SettingsImagesVC: NSViewController {
                                                selector: #selector(notificationDidUpdateImagesNotification),
                                                name: ImageService.didUpdateImageNotification,
                                                object: nil)
+        NotificationCenter.default.addObserver(self,
+                                               selector: #selector(notificationDidUpdatePreferencesNotification),
+                                               name: Preferences.didUpdatePreferencesNotification,
+                                               object: nil)
     }
 
     override func viewDidAppear() {
@@ -53,6 +57,11 @@ class SettingsImagesVC: NSViewController {
         }
     }
 
+    @objc private func notificationDidUpdatePreferencesNotification(_ notification: Notification) {
+        pathControlImagesFolder.url = Preferences.imagesFolderPath
+        updateImages()
+    }
+
     private func updateImages() {
         guard isVisible else { return }
         images = ImageService.shared.allImages()
@@ -68,12 +77,26 @@ class SettingsImagesVC: NSViewController {
         dialog.showsResizeIndicator    = true
         dialog.showsHiddenFiles        = false
         dialog.canChooseDirectories    = true
+        dialog.canChooseFiles          = true
+        dialog.allowedFileTypes = [
+            "lms"
+        ]
         dialog.canCreateDirectories    = true
         dialog.allowsMultipleSelection = false
 
-        if dialog.runModal() == NSApplication.ModalResponse.OK, let url = dialog.url {
+        if dialog.runModal() == NSApplication.ModalResponse.OK, var url = dialog.url {
+            // Assume user selected folder and reset to default Database Name
+            Preferences.resetToDefaultDatabaseName()
+
+            // Check if user did select lms file
+            if url.absoluteString.hasSuffix(".lms") {
+                Preferences.databaseName = url.lastPathComponent
+                url.deleteLastPathComponent()
+            }
+
             pathControlImagesFolder.url = url
             Preferences.imagesFolderPath = url
+            Preferences.sendPreferencesUpdate()
 
             FolderBookmarkService.shared.storeFolderInBookmark(url: url)
             FolderBookmarkService.shared.saveBookmarksData()

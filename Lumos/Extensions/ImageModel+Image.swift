@@ -21,6 +21,7 @@ extension ImageModel {
         let fileURL = absoluteFileURL()
 
         var thumbnailURL = fileURL.deletingLastPathComponent()
+        thumbnailURL.appendPathComponent(Preferences.databaseName)
         thumbnailURL.appendPathComponent("thumbnails")
         thumbnailURL.appendPathComponent(fileURL.lastPathComponent)
 

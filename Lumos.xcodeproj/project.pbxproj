@@ -21,6 +21,7 @@
 		5934E9B320F21C4600E7C5F9 /* Witness.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5934E9B020F21C4500E7C5F9 /* Witness.framework */; };
 		5934E9B420F21C4600E7C5F9 /* RealmSwift.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5934E9B120F21C4600E7C5F9 /* RealmSwift.framework */; };
 		5934E9B720F21CA200E7C5F9 /* SettingsVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5934E9B620F21CA200E7C5F9 /* SettingsVC.swift */; };
+		59552882211CB97B00FD6B52 /* FileIcon.icns in Resources */ = {isa = PBXBuildFile; fileRef = 59552881211CB97B00FD6B52 /* FileIcon.icns */; };
 		597430DC20F222A70018969C /* SettingsServerVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 597430DB20F222A70018969C /* SettingsServerVC.swift */; };
 		597430DF20F2256E0018969C /* SettingsImagesVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 597430DD20F2256E0018969C /* SettingsImagesVC.swift */; };
 		597430E220F226B00018969C /* Preferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = 597430E120F226B00018969C /* Preferences.swift */; };
@@ -90,6 +91,7 @@
 		5934E9B020F21C4500E7C5F9 /* Witness.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Witness.framework; path = Carthage/Build/Mac/Witness.framework; sourceTree = "<group>"; };
 		5934E9B120F21C4600E7C5F9 /* RealmSwift.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = RealmSwift.framework; path = Carthage/Build/Mac/RealmSwift.framework; sourceTree = "<group>"; };
 		5934E9B620F21CA200E7C5F9 /* SettingsVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsVC.swift; sourceTree = "<group>"; };
+		59552881211CB97B00FD6B52 /* FileIcon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = FileIcon.icns; sourceTree = "<group>"; };
 		597430DB20F222A70018969C /* SettingsServerVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsServerVC.swift; sourceTree = "<group>"; };
 		597430DD20F2256E0018969C /* SettingsImagesVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsImagesVC.swift; sourceTree = "<group>"; };
 		597430E120F226B00018969C /* Preferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preferences.swift; sourceTree = "<group>"; };
@@ -216,6 +218,7 @@
 			isa = PBXGroup;
 			children = (
 				5934E67020F142AC00E7C5F9 /* AppDelegate.swift */,
+				59552881211CB97B00FD6B52 /* FileIcon.icns */,
 				5934E68620F1462900E7C5F9 /* Assets.xcassets */,
 				5934E67920F142AF00E7C5F9 /* Info.plist */,
 			);
@@ -291,6 +294,7 @@
 				5934E66A20F142AC00E7C5F9 /* Frameworks */,
 				5934E66B20F142AC00E7C5F9 /* Resources */,
 				5934E68020F143B400E7C5F9 /* Carthage */,
+				590FC16A211B0C6A00B784BD /* Build Number */,
 			);
 			buildRules = (
 			);
@@ -345,6 +349,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				5934E68720F1462900E7C5F9 /* Assets.xcassets in Resources */,
+				59552882211CB97B00FD6B52 /* FileIcon.icns in Resources */,
 				5934E67820F142AF00E7C5F9 /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -352,6 +357,20 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		590FC16A211B0C6A00B784BD /* Build Number */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Build Number";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "#!/bin/bash\nbuildNumber=$(/usr/libexec/PlistBuddy -c \"Print CFBundleVersion\" \"$INFOPLIST_FILE\")\nbuildNumber=$(($buildNumber + 1))\n/usr/libexec/PlistBuddy -c \"Set :CFBundleVersion $buildNumber\" \"$INFOPLIST_FILE\"\n";
+		};
 		5934E68020F143B400E7C5F9 /* Carthage */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
