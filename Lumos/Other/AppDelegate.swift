@@ -23,8 +23,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         ImageService.shared.cleanImageStore()
 
         // Load Settings VC
-        let storyboard = NSStoryboard(name: NSStoryboard.Name(rawValue: "Main") , bundle: nil)
-        let identifier = NSStoryboard.SceneIdentifier(rawValue: "SettingsVC")
+        let storyboard = NSStoryboard(name: "Main" , bundle: nil)
+        let identifier = "SettingsVC"
         settingsWindowController = storyboard.instantiateController(withIdentifier: identifier) as? NSWindowController
 
         if !FileManager.default.isWritableFile(atPath: Preferences.imagesFolderPath.path) {

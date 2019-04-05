@@ -55,7 +55,7 @@ class SettingsImagesVC: NSViewController {
 
     @objc private func notificationDidUpdateImagesNotification(_ notification: Notification) {
         if let imageModel = notification.userInfo?["imageModel"] as? ImageModel {
-            if let indexOfImageModel = images.index(where: { $0.uuid == imageModel.uuid }) {
+            if let indexOfImageModel = images.firstIndex(where: { $0.uuid == imageModel.uuid }) {
                 images[indexOfImageModel] = imageModel
                 tableViewImages.reloadData(forRowIndexes: IndexSet(integer: indexOfImageModel),
                                            columnIndexes: IndexSet(integersIn: 0..<7))

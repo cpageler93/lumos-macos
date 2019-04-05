@@ -1,5 +1,5 @@
 github "cpageler93/Ambassador" "06d45f1adf22c93acc71fba11541f626bb270d07"
 github "envoy/Embassy" "v4.0.8"
 github "njdehoog/Witness" "0.1.3"
-github "realm/realm-cocoa" "v3.10.0"
+github "realm/realm-cocoa" "v3.14.1"
 github "thepeaklab/NetworkService" "0.2.0"

@@ -215,7 +215,7 @@ extension ImageService {
             realm?.add(imageModel)
         }
 
-        if let index = preparingForImages.index(of: imageModel.filename) {
+        if let index = preparingForImages.firstIndex(of: imageModel.filename) {
             preparingForImages.remove(at: index)
         }
 
