@@ -70,7 +70,12 @@ class Server {
             })
 
             router["/api/v1/images/upload"] = JSONResponse { environ, respond in
-                let input = environ["swsgi.input"] as! SWSGIInput
+                guard let input = environ["swsgi.input"] as? SWSGIInput else {
+                    respond([
+                        "success": false
+                    ])
+                    return
+                }
                 JSONReader.read(input, handler: { data in
                     guard let dict = data as? [String: Any],
                         let uuid = dict["uuid"] as? String,

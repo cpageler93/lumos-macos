@@ -38,6 +38,14 @@ class SettingsImagesVC: NSViewController {
         super.viewDidAppear()
         isVisible = true
         updateImages()
+
+        _ = NotificationCenter.default.addObserver(forName: NSNotification.Name("settingsShouldChooseFolder"),
+                                                   object: nil,
+                                                   queue: OperationQueue.main,
+                                                   using:
+        { [weak self] _ in
+            self?.actionImagesFolderChangeClicked(self)
+        })
     }
 
     override func viewDidDisappear() {
@@ -71,9 +79,10 @@ class SettingsImagesVC: NSViewController {
 
     // MARK: - Actions
 
-    @IBAction func actionImagesFolderChangeClicked(_ sender: NSButton) {
+    @IBAction func actionImagesFolderChangeClicked(_ sender: Any) {
         let dialog = NSOpenPanel();
         dialog.title                   = "Choose a folder"
+        dialog.message                 = "Please choose a folder where to save the photos taken by Lumos Camera"
         dialog.showsResizeIndicator    = true
         dialog.showsHiddenFiles        = false
         dialog.canChooseDirectories    = true

@@ -26,6 +26,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let storyboard = NSStoryboard(name: NSStoryboard.Name(rawValue: "Main") , bundle: nil)
         let identifier = NSStoryboard.SceneIdentifier(rawValue: "SettingsVC")
         settingsWindowController = storyboard.instantiateController(withIdentifier: identifier) as? NSWindowController
+
+        if !FileManager.default.isWritableFile(atPath: Preferences.imagesFolderPath.path) {
+            openPreferences(self)
+
+            DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 1) {
+                NotificationCenter.default.post(name: NSNotification.Name(rawValue: "settingsShouldChooseFolder"),
+                                                object: nil)
+            }
+        }
     }
 
     func application(_ sender: NSApplication, openFile filename: String) -> Bool {
@@ -37,7 +46,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         return true
     }
 
-    @IBAction func openPreferences(_ sender: NSMenuItem) {
+    @IBAction func openPreferences(_ sender: Any) {
         settingsWindowController?.showWindow(nil)
     }
 

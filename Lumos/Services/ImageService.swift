@@ -247,7 +247,7 @@ private extension ImageService {
 private extension ImageService {
 
     func sendDidUpdateImageNotification(_ imageModel: ImageModel? = nil) {
-        DispatchQueue.main.async {
+        DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + 0.2) {
             NotificationCenter.default.post(name: ImageService.didUpdateImageNotification,
                                             object: nil,
                                             userInfo: [
